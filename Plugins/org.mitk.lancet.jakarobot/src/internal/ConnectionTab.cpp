@@ -10,6 +10,8 @@ ConnectionTab::ConnectionTab(Ui::HansRobotControls ui, mitk::DataStorage* aDataS
 	{
 		std::cout << "m_dataStorage is nullptr" << std::endl;
 	}//here
+
+
 	InitConnection();
 }
 
@@ -22,6 +24,7 @@ void ConnectionTab::InitConnection()
 	connect(m_ui.pushButton_connectCamrea_3, &QPushButton::clicked, this, &ConnectionTab::connectCamera);
 	connect(m_Camera, &AimCamera::CameraUpdateClock, this, &ConnectionTab::upDateUi);
 	connect(m_ui.pushButton_updataData_3, &QPushButton::clicked, this, &ConnectionTab::updateData);
+
 }
 
 
@@ -71,6 +74,9 @@ void ConnectionTab::flashLable(Eigen::Vector3d tempTip, QLabel* label)
 void ConnectionTab::upDateUi()
 {
 	//AimCamera::GetToolMatrixByName
+	
+
+
 	flashLable(m_Camera->GetToolTipByName("RobotBaseRF"),m_ui.Spine_RobotBaseRFDataLabel_3);
 	flashLable(m_Camera->GetToolTipByName("RobotEndRF"), m_ui.Spine_RobotEndRFDataLabel_3);
 	flashLable(m_Camera->GetToolTipByName("PatientRF"), m_ui.Spine_PatientRFDataLabel_3);

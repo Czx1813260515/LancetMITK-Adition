@@ -27,17 +27,12 @@ void LancetHansRobot::PowerOff()
 void LancetHansRobot::Translate(double x, double y, double z)
 {
 	vtkSmartPointer<vtkMatrix4x4> matrix = vtkSmartPointer<vtkMatrix4x4>::New();
-	matrix->DeepCopy(GetBaseToTCP());
-
-	vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
-	transform->SetMatrix(matrix);
-
-	transform->Translate(x, y, z);
-
-	vtkSmartPointer<vtkMatrix4x4> retMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
-	transform->GetMatrix(retMatrix);
-
-	RobotTransformInBase(retMatrix->GetData());
+	matrix->Identity();
+	matrix->SetElement(0, 3, x);
+	matrix->SetElement(1, 3, y);
+	matrix->SetElement(2, 3, z);
+	PrintDataHelper::CoutMatrix("Translate", matrix);
+	RobotTransformInTCP(matrix->GetData());
 }
 
 void LancetHansRobot::Translate(double* aDirection, double aLength)
@@ -45,20 +40,18 @@ void LancetHansRobot::Translate(double* aDirection, double aLength)
 	this->Translate(aDirection[0] * aLength, aDirection[1] * aLength, aDirection[2] * aLength);
 }
 
+
+
 void LancetHansRobot::Rotate(double* aDirection, double aAngle)
 {
 	vtkSmartPointer<vtkMatrix4x4> matrix = vtkSmartPointer<vtkMatrix4x4>::New();
-	matrix->DeepCopy(GetBaseToTCP());
-
+	matrix->Identity();
 	vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
 	transform->SetMatrix(matrix);
-
 	transform->RotateWXYZ(aAngle, aDirection);
-
 	vtkSmartPointer<vtkMatrix4x4> retMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
 	transform->GetMatrix(retMatrix);
-
-	RobotTransformInBase(retMatrix->GetData());
+	RobotTransformInTCP(retMatrix->GetData());
 }
 
 void LancetHansRobot::RecordInitialPos()
@@ -106,7 +99,7 @@ bool LancetHansRobot::SetTCP(vtkMatrix4x4* aMatrix)
 
 	m_FlangeToTCP->DeepCopy(aMatrix);
 	//Config TCP(MATRIX , TCPName)
-	int nRet = HRIF_SetTCP(0, 0, trans[0], trans[1], trans[2], euler[3], euler[4], euler[5]);
+	int nRet = HRIF_SetTCP(0, 0, trans[0], trans[1], trans[2], euler[0], euler[1], euler[2]);
 	//set tcp to robot
 
 	if (nRet == 0) {
@@ -157,9 +150,11 @@ vtkSmartPointer<vtkMatrix4x4> LancetHansRobot::GetBaseToTCP()
 	double dRx = 0; double dRy = 0; double dRz = 0;
 	// 基座坐标转换为用户坐标
 	int nRet = HRIF_ReadActTcpPos(0, 0, dX, dY, dZ, dRx, dRy, dRz);
+	std::cout << " dX:" << dX << " dy:" << dY << " dZ:" << dZ << " dRx:" << dRx << " dRy:" << dRy << " dRz:" << dRz << std::endl;
+	//auto angles = CalculateForward(GetJointAngles());
 
-	Eigen::Matrix3d rotation = GetRotationMatrixByEuler(dX, dY, dZ);
-	Eigen::Vector3d translation(dRx, dRy, dRz);
+	Eigen::Matrix3d rotation = GetRotationMatrixByEuler(dRx, dRy, dRz);
+	Eigen::Vector3d translation(dX, dY, dZ);
 	auto ret = GetMatrixByRotationAndTranslation(rotation, translation);
 	PrintDataHelper::CoutMatrix("GetBaseToTCP", ret);
 	return ret;
@@ -175,7 +170,9 @@ vtkSmartPointer<vtkMatrix4x4> LancetHansRobot::GetFlangeToTCP()
 vtkSmartPointer<vtkMatrix4x4> LancetHansRobot::GetBaseToFlange()
 {
 	auto TBase2TCP = this->GetBaseToTCP();
+	PrintDataHelper::CoutMatrix("TBase2TCP_GetBaseToFlange()", TBase2TCP);
 	auto TTCP2Flange = this->GetFlangeToTCP();
+	PrintDataHelper::CoutMatrix("TTCP2Flange_GetBaseToFlange()", TTCP2Flange);
 	TTCP2Flange->Invert();
 	vtkSmartPointer<vtkMatrix4x4> ret = vtkSmartPointer<vtkMatrix4x4>::New();
 	vtkMatrix4x4::Multiply4x4(TBase2TCP, TTCP2Flange, ret);
@@ -188,15 +185,20 @@ void LancetHansRobot::RobotTransformInBase(double* aMatrix)
 	baseToTarget->DeepCopy(aMatrix);
 	auto euler = this->GetEulerByMatrix(baseToTarget);
 	auto translation = this->GetTranslationPartByMatrix(baseToTarget);
-	PrintDataHelper::CoutMatrix("RobotTransformInBase",baseToTarget);
+	
+	
 
+	PrintDataHelper::CoutMatrix("RobotTransformInBase",baseToTarget);
+	PrintDataHelper::CoutArray(euler, "euler");
+	PrintDataHelper::CoutArray(translation, "translation");
 	double dJ1 = 0; double dJ2 = 0; double dJ3 = 0;
 	double dJ4 = 0; double dJ5 = 0; double dJ6 = 0;
 	auto joints = this->CalculateInverse(translation, euler);
-
+	PrintDataHelper::CoutVector(joints ,"joints");
 	auto tcpTranslation = this->GetTranslationPartByMatrix(this->GetFlangeToTCP());
 	auto tcpEuler = this->GetEulerByMatrix(this->GetFlangeToTCP());
-
+	PrintDataHelper::CoutArray(tcpTranslation, "tcpTranslation");
+	PrintDataHelper::CoutArray(tcpEuler, "tcpEuler");
 	// 定义用户坐标变量
 	double dUcs_X = 0; double dUcs_Y = 0; double dUcs_Z = 0;
 	double dUcs_Rx = 0; double dUcs_Ry = 0; double dUcs_Rz = 0;
@@ -205,6 +207,7 @@ void LancetHansRobot::RobotTransformInBase(double* aMatrix)
 		joints[0], joints[1], joints[2], joints[3], joints[4], joints[5], tcpTranslation[0], tcpTranslation[1], tcpTranslation[2], tcpEuler[0], tcpEuler[1], tcpEuler[2],
 		dUcs_X, dUcs_Y, dUcs_Z, dUcs_Rx, dUcs_Ry, dUcs_Rz, dVelocity, dAcc, dRadius, nIsUseJoint, nIsSeek, nIOBit,
 		nIOState, strCmdID);
+	cout <<"Robot Arm error code:"<< nRet << endl;
 }
 
 void LancetHansRobot::RobotTransformInTCP(double* aMatrix)
@@ -286,11 +289,13 @@ Eigen::Matrix3d LancetHansRobot::GetRotationMatrixByEuler(double rx, double ry, 
 {
 	Eigen::Matrix3d rotationMatrix;
 
-	Eigen::AngleAxisd rotationZ(rz, Eigen::Vector3d::UnitZ()); // yaw
-	Eigen::AngleAxisd rotationY(ry, Eigen::Vector3d::UnitY()); // pitch
-	Eigen::AngleAxisd rotationX(rx, Eigen::Vector3d::UnitX());
+	Eigen::AngleAxisd rotationZ(rz / 57.29578049044297, Eigen::Vector3d::UnitZ()); // yaw
+	Eigen::AngleAxisd rotationY(ry / 57.29578049044297, Eigen::Vector3d::UnitY()); // pitch
+	Eigen::AngleAxisd rotationX(rx / 57.29578049044297, Eigen::Vector3d::UnitX());
 	rotationMatrix = rotationZ * rotationY * rotationX;
 	return rotationMatrix;
+
+
 }
 
 vtkSmartPointer<vtkMatrix4x4> LancetHansRobot::GetMatrixByRotationAndTranslation(Eigen::Matrix3d aRotation, Eigen::Vector3d aTranslation)
@@ -303,8 +308,7 @@ vtkSmartPointer<vtkMatrix4x4> LancetHansRobot::GetMatrixByRotationAndTranslation
 		{
 			matrix->SetElement(row, col, aRotation(row, col));
 		}
-	}
-	matrix->SetElement(0, 3, aTranslation[0]);
+	}	matrix->SetElement(0, 3, aTranslation[0]);
 	matrix->SetElement(1, 3, aTranslation[1]);
 	matrix->SetElement(2, 3, aTranslation[2]);
 	return matrix;
@@ -335,7 +339,9 @@ Eigen::Vector3d LancetHansRobot::GetTranslationPartByMatrix(vtkMatrix4x4* m)
 
 Eigen::Vector3d LancetHansRobot::CalculateZYXEulerByRotation(Eigen::Matrix3d m)
 {
-	Eigen::Vector3d eulerAngle = m.eulerAngles(2, 1, 0);
+
+
+	Eigen::Vector3d eulerAngle = m.eulerAngles(2, 1, 0); //zyx
 
 	Eigen::Vector3d ret;
 
@@ -343,6 +349,8 @@ Eigen::Vector3d LancetHansRobot::CalculateZYXEulerByRotation(Eigen::Matrix3d m)
 	ret[0] = 180 * eulerAngle[2] / vtkMath::Pi(); // Z (yaw)
 	ret[1] = 180 * eulerAngle[1] / vtkMath::Pi(); // Y (pitch)
 	ret[2] = 180 * eulerAngle[0] / vtkMath::Pi(); // X (roll)
+	PrintDataHelper::CoutArray(ret, "ret");
+
 	return ret;
 }
 
@@ -369,13 +377,16 @@ std::vector<double> LancetHansRobot::CalculateInverse(Eigen::Vector3d aTranslati
 		joints[0], joints[1], joints[2], joints[3], joints[4], joints[5],
 		dTargetJ1, dTargetJ2, dTargetJ3, dTargetJ4, dTargetJ5, dTargetJ6);
 	std::vector<double> ret{ dTargetJ1, dTargetJ2, dTargetJ3, dTargetJ4, dTargetJ5, dTargetJ6 };
+
 	return ret;
 }
-
+//wating for test, there is a bugfuction. 2024.10.8
 std::vector<double> LancetHansRobot::CalculateForward(std::vector<double> aJointAngles)
 {
-	auto tcpTranslation = this->GetTranslationPartByMatrix(this->GetFlangeToTCP());
-	auto tcpEuler = this->GetEulerByMatrix(this->GetFlangeToTCP());
+	/*auto tcpTranslation = this->GetTranslationPartByMatrix(this->GetFlangeToTCP());
+	std::cout << "CalculateForward_tcpTranslation:" << tcpTranslation[0] << " " << tcpTranslation[1] << " " << tcpTranslation[2] << std::endl;
+	auto tcpEuler = this->GetEulerByMatrix(this->GetFlangeToTCP());*/
+
 	// 定义用户坐标变量
 	double dUcs_X = 0; double dUcs_Y = 0; double dUcs_Z = 0;
 	double dUcs_Rx = 0; double dUcs_Ry = 0; double dUcs_Rz = 0;
@@ -383,9 +394,22 @@ std::vector<double> LancetHansRobot::CalculateForward(std::vector<double> aJoint
 	double dTarget_X = 0; double dTarget_Y = 0; double dTarget_Z = 0;
 	double dTarget_Rx = 0; double dTarget_Ry = 0; double dTarget_Rz = 0;
 	// 求正解
-	int nRet = HRIF_GetForwardKin(0, 0, aJointAngles[0], aJointAngles[1], aJointAngles[2], aJointAngles[3], aJointAngles[4], aJointAngles[5],
+	/*int nRet = HRIF_GetForwardKin(0, 0, aJointAngles[0], aJointAngles[1], aJointAngles[2], aJointAngles[3], aJointAngles[4], aJointAngles[5],
 		tcpTranslation[0], tcpTranslation[1], tcpTranslation[2], tcpEuler[0], tcpEuler[1], tcpEuler[2], dUcs_X, dUcs_Y, dUcs_Z, dUcs_Rx, dUcs_Ry, dUcs_Rz,
-		dTarget_X, dTarget_Y, dTarget_Z, dTarget_Rx, dTarget_Ry, dTarget_Rz);
+		dTarget_X, dTarget_Y, dTarget_Z, dTarget_Rx, dTarget_Ry, dTarget_Rz);*/
+
+		int nRet = HRIF_GetForwardKin(0, 0, aJointAngles[0], aJointAngles[1], aJointAngles[2], aJointAngles[3], aJointAngles[4], aJointAngles[5],
+			0,0, 0, 0, 0, 0, dUcs_X, dUcs_Y, dUcs_Z, dUcs_Rx, dUcs_Ry, dUcs_Rz,
+			dTarget_X, dTarget_Y, dTarget_Z, dTarget_Rx, dTarget_Ry, dTarget_Rz);
 	std::vector<double> ret = { dTarget_X, dTarget_Y, dTarget_Z, dTarget_Rx, dTarget_Ry, dTarget_Rz };
+	//std::cout << nRet << "CalculateForward" << std::endl;
+	PrintDataHelper::CoutVector(ret,"ret");
 	return ret;
+}
+string LancetHansRobot::GetErrorCodeString(int errorCode)
+{
+	int nRet = 0;
+	string tmpstr;
+	nRet =HRIF_GetErrorCodeStr(0,errorCode,tmpstr);
+	return tmpstr;
 }

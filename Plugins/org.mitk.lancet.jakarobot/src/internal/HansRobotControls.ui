@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>702</width>
-    <height>868</height>
+    <width>829</width>
+    <height>880</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -23,7 +23,7 @@
    <string notr="true"/>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
-   <item row="0" column="0">
+   <item row="0" column="1">
     <widget class="QTabWidget" name="tabWidget_2">
      <property name="minimumSize">
       <size>
@@ -78,7 +78,7 @@ QTabBar QToolButton:hover {
 </string>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab1_2">
       <attribute name="title">
@@ -926,11 +926,37 @@ QPushButton:pressed {
       <widget class="QTextBrowser" name="textBrowser_hans">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>-10</x>
          <y>340</y>
-         <width>651</width>
+         <width>421</width>
          <height>192</height>
         </rect>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_repeat_position">
+       <property name="geometry">
+        <rect>
+         <x>430</x>
+         <y>350</y>
+         <width>111</width>
+         <height>51</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>重复定位精度测试</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_aboslute_position">
+       <property name="geometry">
+        <rect>
+         <x>550</x>
+         <y>350</y>
+         <width>111</width>
+         <height>51</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>绝对定位精度测试</string>
        </property>
       </widget>
      </widget>

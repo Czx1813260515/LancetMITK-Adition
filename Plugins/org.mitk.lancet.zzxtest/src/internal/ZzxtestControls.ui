@@ -23,7 +23,57 @@
    <string notr="true"/>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
-   <item row="0" column="0" colspan="2">
+   <item row="1" column="0">
+    <widget class="QPushButton" name="pushButton_SuddenStop">
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string>Stop</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QPushButton" name="pushButton_cleantext">
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color: #F0F8FF;    /* 设置背景颜色 */
+    color: #1E90FF;               /* 设置文字颜色 */
+    border: 2px solid #87CEFA;    /* 设置边框颜色 */
+    border-radius: 8px;           /* 设置圆角 */
+    padding: 5px 15px;            /* 设置内边距 */
+}
+
+QPushButton:hover {
+    background-color: #E0F7FF;    /* 鼠标悬停时背景颜色变化 */
+    color: #4682B4;               /* 鼠标悬停时文字颜色 */
+}
+
+QPushButton:pressed {
+    background-color: #B0E0E6;    /* 按下按钮时背景颜色 */
+    color: #1C86EE;               /* 按下按钮时文字颜色 */
+    border: 2px solid #4682B4;    /* 按下按钮时边框颜色 */
+}
+</string>
+     </property>
+     <property name="text">
+      <string>Clear</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QTextBrowser" name="textBrowser">
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="minimumSize">
       <size>
@@ -78,7 +128,7 @@ QTabBar QToolButton:hover {
 </string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab1">
       <attribute name="title">
@@ -1479,56 +1529,6 @@ QPushButton:pressed {
        </layout>
       </widget>
      </widget>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QPushButton" name="pushButton_SuddenStop">
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="text">
-      <string>Stop</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
-    <widget class="QPushButton" name="pushButton_cleantext">
-     <property name="styleSheet">
-      <string notr="true">QPushButton {
-    background-color: #F0F8FF;    /* 设置背景颜色 */
-    color: #1E90FF;               /* 设置文字颜色 */
-    border: 2px solid #87CEFA;    /* 设置边框颜色 */
-    border-radius: 8px;           /* 设置圆角 */
-    padding: 5px 15px;            /* 设置内边距 */
-}
-
-QPushButton:hover {
-    background-color: #E0F7FF;    /* 鼠标悬停时背景颜色变化 */
-    color: #4682B4;               /* 鼠标悬停时文字颜色 */
-}
-
-QPushButton:pressed {
-    background-color: #B0E0E6;    /* 按下按钮时背景颜色 */
-    color: #1C86EE;               /* 按下按钮时文字颜色 */
-    border: 2px solid #4682B4;    /* 按下按钮时边框颜色 */
-}
-</string>
-     </property>
-     <property name="text">
-      <string>Clear</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="2">
-    <widget class="QTextBrowser" name="textBrowser">
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
     </widget>
    </item>
   </layout>

@@ -13,4 +13,5 @@ set(MITK_MODULES
   LancetHardwareDevice
   #LancetSingleNodeWidgetInitor
   #LancetModelControl
+  LancetRobotRegistration
 )

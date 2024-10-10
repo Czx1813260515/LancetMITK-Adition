@@ -1,17 +1,30 @@
 #pragma once
-#ifndef LANCETHANSROBOT_h
-#define LANCETHANSROBOT_h
+#ifndef LANCETJAKAROBOT_h
+#define LANCETJAKAROBOT_h
 
 #include "AbstractRobot.h"
-#include <HR_Pro.h>
+#include <JAKAZuRobot.h>
 #include <vtkMath.h>
+#include <string>
 #include "MitkLancetHardwareDeviceExports.h"
 #include "PrintDataHelper.h"
-class MITKLANCETHARDWAREDEVICE_EXPORT LancetHansRobot : public AbstractRobot
+//JAKA
+// 定义一个宏，用于检查函数返回值是否为成功
+#define CHECK_ERROR_AND_RETURN(func_call) \
+    do { \
+        int error_code = (func_call); \
+        if (error_code != ERR_SUCC) { \
+            printf("Error: %s\n", to_string(error_code)); \
+            return; \
+        } \
+    } while(0)
+
+
+class MITKLANCETHARDWAREDEVICE_EXPORT LancetJakaRobot : public AbstractRobot
 {
 	//Q_OBJECT
 public:
-	LancetHansRobot();
+	LancetJakaRobot();
 	void Connect() override;
 
 	void PowerOn() override;
@@ -64,42 +77,46 @@ private:
 	Eigen::Matrix3d GetRotationMatrixByEuler(double rx, double ry, double rz);
 	vtkSmartPointer<vtkMatrix4x4> GetMatrixByRotationAndTranslation(Eigen::Matrix3d aRotation, Eigen::Vector3d aTranslation);
 	Eigen::Vector3d GetEulerByMatrix(vtkMatrix4x4* m);
-
+	Eigen::Vector3d CalculateXYZEulerByRotation(Eigen::Matrix3d m);
 	Eigen::Matrix3d GetRotationPartByMatrix(vtkMatrix4x4* m);
 	Eigen::Vector3d GetTranslationPartByMatrix(vtkMatrix4x4* m);
-	Eigen::Vector3d CalculateZYXEulerByRotation(Eigen::Matrix3d m);
-
 	std::vector<double> CalculateInverse(Eigen::Vector3d aTranslation, Eigen::Vector3d aEulerAngle);
-
-	std::vector<double> CalculateForward(std::vector<double> aJointAngles);
-
-	string GetErrorCodeString(int errorCode);
+	inline const char* to_string(int error_code)
+	{
+		switch (error_code)
+		{
+		case ERR_SUCC:                return "Success";
+		case ERR_FUCTION_CALL_ERROR:  return "Function call error";
+		case ERR_INVALID_HANDLER:     return "Invalid handler";
+		case ERR_INVALID_PARAMETER:   return "Invalid parameter";
+		case ERR_COMMUNICATION_ERR:   return "Communication error";
+		case ERR_KINE_INVERSE_ERR:    return "Kinematics inverse error";
+		case ERR_EMERGENCY_PRESSED:   return "Emergency stop pressed";
+		case ERR_NOT_POWERED:         return "Robot not powered";
+		case ERR_NOT_ENABLED:         return "Robot not enabled";
+		case ERR_DISABLE_SERVOMODE:   return "Servo mode not enabled";
+		case ERR_NOT_OFF_ENABLE:      return "Robot not off enable";
+		case ERR_PROGRAM_IS_RUNNING:  return "Program is running, operation not allowed";
+		case ERR_CANNOT_OPEN_FILE:    return "Cannot open file";
+		case ERR_MOTION_ABNORMAL:     return "Motion abnormal";
+		case ERR_FTP_PREFROM:         return "FTP error";
+		case ERR_VALUE_OVERSIZE:      return "Socket message or value oversize";
+		default:                      return "Unknown error";
+		}
+	}
 private:
 	vtkSmartPointer<vtkMatrix4x4> m_InitialPos;
 	vtkSmartPointer<vtkMatrix4x4> m_FlangeToTCP;
-private:
-	// 定义工具坐标变量
-	std::string sTcpName = "TCP";
-	// 定义用户坐标变量
-	std::string sUcsName = "Base";
-	// 定义运动速度
-	double dVelocity = 30;
-	// 定义运动加速度
-	double dAcc = 50;
-	// 定义过渡半径
-	double dRadius = 50;
-	// 定义是否使用关节角度
-	int nIsUseJoint = 1;
-	// 定义是否使用检测 DI 停止
-	int nIsSeek = 0;
-	// 定义检测的 DI 索引
-	int nIOBit = 0;
-	// 定义检测的 DI 状态
-	int nIOState = 0;
-	// 定义路点 ID 
-	string strCmdID = "0";
 
-	int nMoveType = 0;
+private:
+	//声明对象
+	JAKAZuRobot m_Robot;
+	//定义关节角速度 rad/s
+	double dJointVel = 0.2;
+	//定义关节加速度 rad/s^2
+	double dJointAcc = 0.3;
+	//定义机器人关节运动终点误差 mm
+	double dJointErr = 0.01;
 };
 
 #endif
